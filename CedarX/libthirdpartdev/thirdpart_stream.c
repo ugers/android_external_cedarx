@@ -52,6 +52,26 @@ static long long thirdpart_get_stream_size(struct cdx_stream_info *stream)
 	return 0;
 }
 
+static int thirdpart_decrypt_stream(void *ptr, size_t size, int pkt_type, struct cdx_stream_info *stream)
+{
+    LOGV(">>>> thirdpart decrypt stream: pkt_type %d", pkt_type);
+	//pkt_type
+	//1:video
+	//2:audio
+	//3:subtitle
+	if(pkt_type == 1) {
+		//decrypt_video(ptr, size);
+		LOGV("pkt_type: video");
+	} else if(pkt_type == 2) {
+		//decrypt_audio(ptr, size);
+		LOGV("pkt_type: audio");
+	} else if(pkt_type == 3) {
+		//decrypt_subtitle(ptr, size);
+		LOGV("pkt_type: subtitle");
+	}
+        
+	return 0;
+}
 int thirdpart_create_stream_handle(struct cdx_stream_info *stm_info)
 {
 	LOGI(">>>> thirdpart stream info:%s",stm_info->data_src_desc.source_url);
@@ -61,7 +81,18 @@ int thirdpart_create_stream_handle(struct cdx_stream_info *stm_info)
 	stm_info->read    = thirdpart_read_steam ;
 	stm_info->write   = thirdpart_write_steam;
 	stm_info->getsize = thirdpart_get_stream_size;
-
+    
+    if (stm_info->data_src_desc.thirdpart_stream_type == CEDARX_THIRDPART_STREAM_USER1)
+    {
+        // Video stream data encrypt;
+        stm_info->data_src_desc.thirdpart_encrypted_type |= CEDARX_THIRDPART_ENCRYPTED_VIDEO;
+        // Audio stream data encrypt;
+        stm_info->data_src_desc.thirdpart_encrypted_type |= CEDARX_THIRDPART_ENCRYPTED_AUDIO;
+        // Subtitle stream data encrypt;
+        stm_info->data_src_desc.thirdpart_encrypted_type |= CEDARX_THIRDPART_ENCRYPTED_SUBTITLE;
+        stm_info->decrypt = thirdpart_decrypt_stream;
+    }
+    
 	return 0;
 }
 
@@ -74,4 +105,3 @@ void thirdpart_destory_stream_handle(struct cdx_stream_info *stm_info)
 		stm_info->file_handle = NULL;
 	}
 }
-
