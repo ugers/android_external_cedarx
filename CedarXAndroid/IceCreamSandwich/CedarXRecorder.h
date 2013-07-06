@@ -17,10 +17,13 @@ namespace android {
 
 class Camera;
 class AudioRecord;
+class CedarXRecorderAdapter;
 
 #define AUDIO_LATENCY_TIME	700000		// US
 #define VIDEO_LATENCY_TIME	700000		// US
-#define MAX_FILE_SIZE		(2*1024*1024*1024LL - 64*1024)
+#define AUDIO_LATENCY_TIME_CTS	  0   //fuqiang
+#define VIDEO_LATENCY_TIME_CTS	  0
+#define MAX_FILE_SIZE		(2*1024*1024*1024LL - 200*1024*1024)
 
 typedef enum CDX_RECORDER_MEDIATYPE {
 	CDX_RECORDER_MEDIATYPE_VIDEO = 0,
@@ -60,6 +63,7 @@ public:
     status_t setVideoEncoder(video_encoder ve);
 	status_t setParamVideoEncodingBitRate(int32_t bitRate);
     status_t setVideoSize(int width, int height);
+	status_t setOutputVideoSize(int width, int height);
     status_t setVideoFrameRate(int frames_per_second);
 	status_t setParamVideoRotation(int32_t degrees);
 
@@ -110,6 +114,31 @@ public:
 #endif
 		}
 	};
+//added by JM.
+// --- Notification Client ---
+    class NotificationClient : public IBinder::DeathRecipient 
+    {
+        public:
+            NotificationClient(const sp<IMediaRecorderClient>& mediaRecorderClient,
+				               CedarXRecorder* cedarXRecorder,
+							           pid_t pid);
+            virtual             ~NotificationClient();
+            sp<IMediaRecorderClient>    client() { return mMediaRecorderClient; }
+            // IBinder::DeathRecipient
+            virtual     void        binderDied(const wp<IBinder>& who);
+			
+			
+        private:
+            NotificationClient(const NotificationClient&);
+            NotificationClient& operator = (const NotificationClient&);
+
+			sp<IMediaRecorderClient>     mMediaRecorderClient;
+			CedarXRecorder*             mCedarXRecorder;
+            pid_t                       mPid;            
+    };
+
+	sp<NotificationClient>     mNotificationClient;
+//end add by JM.
 
 private:
 	
@@ -132,7 +161,9 @@ private:
         // the video recording signal tone
         kAutoRampStartUs = 700000,
     };
-
+	
+	char mCameraHalVersion[32];
+		
     sp<Camera> mCamera;
 	sp<ICameraRecordingProxy> mCameraProxy;
     sp<Surface> mPreviewSurface;
@@ -144,6 +175,7 @@ private:
 	
     int32_t mCameraId;
     int32_t mVideoWidth, mVideoHeight;
+	int32_t mOutputVideoWidth, mOutputVideoHeight;
     int32_t mFrameRate;
     int32_t mVideoBitRate;
 	int64_t mMaxFileDurationUs;
@@ -196,10 +228,35 @@ private:
 
 	sp<DeathNotifier>   mDeathNotifier;
 	sp<IMemory>         mBsFrameMemory;
+	char			*mCallingProcessName;   //fuqiang
+	int                 mAudioEncodeType;
+	bool				mOutputVideosizeflag;
 	
     CedarXRecorder(const CedarXRecorder &);
     CedarXRecorder &operator=(const CedarXRecorder &);
+
+//    friend class CedarXRecorderAdapter;
+//    CedarXRecorderAdapter *pCedarXRecorderAdapter;
 };
+
+//typedef enum tag_CedarXRecorderAdapterCmd
+//{
+//    CEDARXRECORDERADAPTER_CMD_NOTIFY_CAMERA_CEDARX_ENCODE = 0,    //need tell camera, we use which encoder, from android4.0.4, change command name
+//    
+//    CEDARXRECORDERADAPTER_CMD_,
+//}CedarXRecorderAdapterCmd;
+
+
+//class CedarXRecorderAdapter  //base adapter
+//{
+//public:
+//    CedarXRecorderAdapter(CedarXRecorder *recorder);
+//    virtual ~CedarXRecorderAdapter();
+//    int CedarXRecorderAdapterIoCtrl(int cmd, int aux, void *pbuffer);  //cmd = CedarXRecorderAdapterCmd
+//    
+//private:
+//    CedarXRecorder* const pCedarXRecorder; //CedarXRecorder pointer
+//};
 
 }  // namespace android
 
