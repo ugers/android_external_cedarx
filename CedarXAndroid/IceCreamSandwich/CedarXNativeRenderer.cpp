@@ -85,7 +85,7 @@ CedarXNativeRenderer::CedarXNativeRenderer(const sp<ANativeWindow> &nativeWindow
         native_window_set_buffers_geometry(mNativeWindow.get(),
             		                       bufWidth,
                                            bufHeight,
-                                           halFormat
+                                           halFormat,
                                            screenID);
 #else
         #error "Unknown chip type!"
