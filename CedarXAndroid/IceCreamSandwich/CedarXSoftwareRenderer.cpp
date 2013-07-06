@@ -61,6 +61,14 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
     halFormat = HAL_PIXEL_FORMAT_YV12;
     bufWidth = mWidth;
     bufHeight = mHeight;
+    if(bufWidth != ((mWidth + 15) & ~15))
+    {
+        LOGW("(f:%s, l:%d) bufWidth[%d]!=display_width[%d]", __FUNCTION__, __LINE__, ((mWidth + 15) & ~15), mWidth);
+    }
+    if(bufHeight != ((mHeight + 15) & ~15))
+    {
+        LOGW("(f:%s, l:%d) bufHeight[%d]!=display_height[%d]", __FUNCTION__, __LINE__, ((mHeight + 15) & ~15), mHeight);
+    }
 
     CHECK(mNativeWindow != NULL);
 
@@ -70,16 +78,20 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
             GRALLOC_USAGE_SW_READ_NEVER | GRALLOC_USAGE_SW_WRITE_OFTEN
             | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_EXTERNAL_DISP));
 
-    CHECK_EQ(0,
-            native_window_set_scaling_mode(
-            mNativeWindow.get(),
-            NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW));
+//    CHECK_EQ(0,
+//            native_window_set_scaling_mode(
+//            mNativeWindow.get(),
+//            NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW));
 
     // Width must be multiple of 32???
     CHECK_EQ(0, native_window_set_buffers_geometry(
                 mNativeWindow.get(),
-                bufWidth,
+                //(bufWidth + 15) & ~15,
+                //(bufHeight+ 15) & ~15,
+                (bufWidth + 15) & ~15,
                 bufHeight,
+                //bufWidth,
+                //bufHeight,
                 halFormat));
 
     uint32_t transform;
@@ -95,6 +107,12 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
         CHECK_EQ(0, native_window_set_buffers_transform(
                     mNativeWindow.get(), transform));
     }
+    Rect crop;
+    crop.left = 0;
+    crop.top  = 0;
+    crop.right = bufWidth;
+    crop.bottom = bufHeight;
+    mNativeWindow->perform(mNativeWindow.get(), NATIVE_WINDOW_SET_CROP, &crop);
 }
 
 CedarXSoftwareRenderer::~CedarXSoftwareRenderer() {
@@ -105,33 +123,71 @@ static int ALIGN(int x, int y) {
     return (x + y - 1) & ~(y - 1);
 }
 
-void CedarXSoftwareRenderer::render(
-        const void *data, size_t size, void *platformPrivate) {
+void CedarXSoftwareRenderer::render0(const void *data, size_t size, void *platformPrivate)
+{
     ANativeWindowBuffer *buf;
+	libhwclayerpara_t*  pOverlayParam;
     int err;
-    if ((err = mNativeWindow->dequeueBuffer(mNativeWindow.get(), &buf)) != 0) {
+    if ((err = mNativeWindow->dequeueBuffer_DEPRECATED(mNativeWindow.get(), &buf)) != 0) {
         LOGW("Surface::dequeueBuffer returned error %d", err);
         return;
     }
-
-    CHECK_EQ(0, mNativeWindow->lockBuffer(mNativeWindow.get(), buf));
+    CHECK_EQ(0, mNativeWindow->lockBuffer_DEPRECATED(mNativeWindow.get(), buf));
 
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    
+    
+    //a10_GPUbuffer_YV12, Y:16*2 align, UV:16*1 align.
+    //a10_vdecbuffer_YV12, Y:16*16 align, UV:16*8 align.
+    //a31_GPUbuffer_YV12, Y:32*2 align, UV:16*1 align.
+    //a31_vdecbuffer_YV12, Y:16*16 align, UV:16*8 or 8*8 align
 
-    Rect bounds(mWidth, mHeight);
+    //we make the rule: the buffersize request from GPU is Y:16*16 align!
+    //But in A31, gpu buffer is 32align in width at least, 
+    //so the requested a31_gpu_buffer is Y_32*16align, uv_16*8 actually.
+    
+    //Rect bounds((mWidth+15)&~15, (mHeight+15)&~15); 
+    Rect bounds((mWidth+15)&~15, (mHeight+15)&~15);
+    //Rect bounds(mWidth, mHeight);
 
     void *dst;
-    CHECK_EQ(0, mapper.lock(
-                buf->handle, GRALLOC_USAGE_SW_WRITE_OFTEN, bounds, &dst));
+    CHECK_EQ(0, mapper.lock(buf->handle, GRALLOC_USAGE_SW_WRITE_OFTEN, bounds, &dst));
 
+    //LOGD("buf->stride:%d, buf->width:%d, buf->height:%d buf->format:%d, buf->usage:%d,WXH:%dx%d dst:%p", 
+    //    buf->stride, buf->width, buf->height, buf->format, buf->usage, mWidth, mHeight, dst);
+    
     //LOGV("mColorFormat: %d", mColorFormat);
+#if defined(__CHIP_VERSION_F23)
     size_t dst_y_size = buf->stride * buf->height;
-    size_t dst_c_stride = ALIGN(buf->stride / 2, 16);
+    size_t dst_c_stride = ALIGN(buf->stride / 2, 16);    //16
     size_t dst_c_size = dst_c_stride * buf->height / 2;
 
+    int src_y_width = (mWidth+15)&~15;
+    int src_y_height = (mHeight+15)&~15;
+    int src_c_width = ALIGN(src_y_width / 2, 16);   //uv_width_align=16
+    int src_c_height = src_y_height/2;
+    int src_display_y_width = mWidth;
+    int src_display_y_height = mHeight;
+    int src_display_c_width = src_display_y_width/2;
+    int src_display_c_height = src_display_y_height/2;
+    
+    size_t src_display_y_size = src_y_width * src_display_y_height;
+    size_t src_display_c_size = src_c_width * src_display_c_height;
+    size_t src_y_size = src_y_width * src_y_height;
+    size_t src_c_size = src_c_width * src_c_height;
     //LOGV("buf->stride:%d buf->height:%d WXH:%dx%d dst:%p data:%p", buf->stride, buf->height, mWidth, mHeight, dst, data);
+    //copy_method_1:
     memcpy(dst, data, dst_y_size + dst_c_size*2);
-    //memcpy(dst, data, dst_y_size * 3 / 2); LOGV("render size error!");
+    //copy_method_2:
+    //memcpy(dst, data, src_y_size + src_c_size*2);
+    //copy_method_3:
+//    memcpy(dst, data, src_display_y_size);
+//    dst += dst_y_size;
+//    data += src_y_size;
+//    memcpy(dst, data, src_display_c_size);
+//    dst += dst_c_size;
+//    data += src_c_size;
+//    memcpy(dst, data, src_display_c_size);
 
 #if 0
 		{
@@ -155,7 +211,7 @@ void CedarXSoftwareRenderer::render(
 
     CHECK_EQ(0, mapper.unlock(buf->handle));
 
-    if ((err = mNativeWindow->queueBuffer(mNativeWindow.get(), buf)) != 0) {
+    if ((err = mNativeWindow->queueBuffer_DEPRECATED(mNativeWindow.get(), buf)) != 0) {
         LOGW("Surface::queueBuffer returned error %d", err);
     }
     buf = NULL;
