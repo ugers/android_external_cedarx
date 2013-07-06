@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#include <CDX_LogNDebug.h>
+#include <CDX_LogNDebug.h>
 #define LOG_TAG "CedarXMetadataRetriever"
 #include <CDX_Debug.h>
 
@@ -36,8 +36,11 @@
 #include <CDX_PlayerAPI.h>
 #include <CDX_UglyDef.h>
 #include <stdio.h>
+#include <binder/MemoryBase.h>
+#include <binder/MemoryHeapBase.h>
 
-namespace android {
+namespace android
+{
 
 /* add by Gary. start {{----------------------------------- */
 static int _Convert2UTF8( const uint8_t *src, size_t size, __a_audio_fonttype_e charset, String8 *s );
@@ -47,145 +50,194 @@ static int _Convert2UTF8( const uint8_t *src, size_t size, __a_audio_fonttype_e 
 CedarXMetadataRetriever::CedarXMetadataRetriever()
     : bCDXMetaRetriverInit(false),
       mParsedMetaData(false),
-      mAlbumArt(NULL) {
+      mAlbumArt(NULL)
+{
     LOGV("CedarXMetadataRetriever()");
 }
 
-CedarXMetadataRetriever::~CedarXMetadataRetriever() {
-    LOGV("~CedarXMetadataRetriever()");
-
-    if(bCDXMetaRetriverInit){
-    	LOGV("CDXRetriever_Destroy called!");
+CedarXMetadataRetriever::~CedarXMetadataRetriever()
+{
+	//ALOGV("xxxxxxxxxx destroy retriever.");
+    if(bCDXMetaRetriverInit)
+    {
+    	LOGV("xxxx CDXRetriever_Destroy called!");
         CDXRetriever_Destroy(mRetriever);
         bCDXMetaRetriverInit = false;
     }
-    delete mAlbumArt;
-    mAlbumArt = NULL;
+
+    if(mAlbumArt)
+    {
+    	delete mAlbumArt;
+        mAlbumArt = NULL;
+    }
+	//ALOGV("xxxxxxxxxx destroy retriever finish.");
 }
 
-status_t CedarXMetadataRetriever::setDataSource(
-        const char *url,
-        const KeyedVector<String8, String8> *headers){
-    LOGD("setDataSource(%s)", url);
-
+status_t CedarXMetadataRetriever::setDataSource(const char *url, const KeyedVector<String8, String8> *headers)
+{
     mParsedMetaData = false;
-    mMetaData.clear();
-    delete mAlbumArt;
-    mAlbumArt = NULL;
 
-    if(!bCDXMetaRetriverInit){
+    mMetaData.clear();
+
+    LOGV("xxxx set data source %s.",url);
+    if(mAlbumArt != NULL)
+    {
+    	delete mAlbumArt;
+    	mAlbumArt = NULL;
+    }
+
+    //ALOGV("xxxx set data source step 2.");
+    if(!bCDXMetaRetriverInit)
+    {
     	if(CDXRetriever_Create((void**)&mRetriever) != 0)
     	    return UNKNOWN_ERROR;
+
     	bCDXMetaRetriverInit = true;
-    	LOGV("CDXRetriever_Create called!");
     }
 
-    if(mRetriever->control(mRetriever, CDX_SET_DATASOURCE_URL, (unsigned int)url, 0) != 0){
+    //ALOGV("xxxx set data source step 3.");
+    if(mRetriever->control(mRetriever, CDX_SET_DATASOURCE_URL, (unsigned int)url, 0) != 0)
        	return UNKNOWN_ERROR;
-    }
 
     bCDXMetaRetriverInit = true;
 
+    //ALOGV("xxxx set data source step 4.");
     return OK;
 }
 
 // Warning caller retains ownership of the filedescriptor! Dup it if necessary.
-status_t CedarXMetadataRetriever::setDataSource(
-        int fd, int64_t offset, int64_t length) {
+status_t CedarXMetadataRetriever::setDataSource(int fd, int64_t offset, int64_t length)
+{
     fd = dup(fd);
 
-    LOGD("setDataSource(%d, %lld, %lld)", fd, offset, length);
-
     mParsedMetaData = false;
-    mMetaData.clear();
-    delete mAlbumArt;
-    mAlbumArt = NULL;
 
-    if(!bCDXMetaRetriverInit){
+    mMetaData.clear();
+
+    if(mAlbumArt != NULL)
+    {
+    	delete mAlbumArt;
+    	mAlbumArt = NULL;
+    }
+
+    if(!bCDXMetaRetriverInit)
+    {
     	if(CDXRetriever_Create((void**)&mRetriever) != 0)
     		return UNKNOWN_ERROR;
+
     	bCDXMetaRetriverInit = true;
-    	LOGV("create mRetriver:%p",mRetriever);
     }
 
     CedarXExternFdDesc cdx_ext_fd;
-    cdx_ext_fd.fd = fd;
+    cdx_ext_fd.fd     = fd;
     cdx_ext_fd.offset = offset;
     cdx_ext_fd.length = length;
-    if(mRetriever->control(mRetriever, CDX_SET_DATASOURCE_FD, (unsigned int)(&cdx_ext_fd), 0) != 0){
+    if(mRetriever->control(mRetriever, CDX_SET_DATASOURCE_FD, (unsigned int)(&cdx_ext_fd), 0) != 0)
     	return UNKNOWN_ERROR;
-    }
 
     return OK;
 }
 
 
+sp<IMemory> CedarXMetadataRetriever::getStreamAtTime(int64_t timeUs)
+{
+    VideoThumbnailInfo vd_thumb_info;
+    sp<IMemory> mem = NULL;
+    unsigned char* pOutBuf;
 
-VideoFrame *CedarXMetadataRetriever::getFrameAtTime(
-        int64_t timeUs, int option) {
-    LOGV("getFrameAtTime");
+    memset(&vd_thumb_info, 0, sizeof(VideoThumbnailInfo));
+    vd_thumb_info.format         = VIDEO_THUMB_YUVPLANNER; //0: JPEG STREAM  1: YUV RAW STREAM
+    vd_thumb_info.capture_time   = 20*1000;
+    vd_thumb_info.capture_result = 0;
 
+	mRetriever->control(mRetriever, CDX_CMD_CAPTURE_THUMBNAIL_STREAM, (unsigned int)(&vd_thumb_info), 0);
+	if(vd_thumb_info.capture_result)
+	{
+	    sp<MemoryHeapBase> heap = new MemoryHeapBase(vd_thumb_info.thumb_stream_size + 4, 0, "CedarXMetadataRetriever");
+	    if (heap == NULL)
+	        LOGE("failed to create MemoryDealer");
+
+	    mem = new MemoryBase(heap, 0, vd_thumb_info.thumb_stream_size + 4);
+	    if (mem == NULL)
+	    {
+	        LOGE("not enough memory for stream size = %u", vd_thumb_info.thumb_stream_size);
+	    }
+	    else
+	    {
+		    pOutBuf = static_cast<unsigned char*>(mem->pointer());
+		    pOutBuf[0] = (vd_thumb_info.thumb_stream_size) & 0xff;
+		    pOutBuf[1] = (vd_thumb_info.thumb_stream_size>>8) & 0xff;
+		    pOutBuf[2] = (vd_thumb_info.thumb_stream_size>>16) & 0xff;
+		    pOutBuf[3] = (vd_thumb_info.thumb_stream_size>>24) & 0xff;
+		    //ALOGV("xxxxxxxxxx athumb stream size is %d", vd_thumb_info.thumb_stream_size);
+		    memcpy(pOutBuf+4, vd_thumb_info.thumb_stream_address, vd_thumb_info.thumb_stream_size);
+	    }
+	}
+
+    mRetriever->control(mRetriever, CDX_CMD_CLOSE_CAPTURE, 0, 0);
+
+    //ALOGV("xxxxxxx getStreamAtTime finish.");
+	return mem;
+}
+
+
+VideoFrame *CedarXMetadataRetriever::getFrameAtTime(int64_t timeUs, int option)
+{
     VideoThumbnailInfo vd_thumb_info;
 
     memset(&vd_thumb_info, 0, sizeof(VideoThumbnailInfo));
-    vd_thumb_info.format = VIDEO_THUMB_YUVPLANNER; //0: JPEG STREAM  1: YUV RAW STREAM
-    vd_thumb_info.capture_time = 18*1000;
-    vd_thumb_info.require_width = 512;
+    vd_thumb_info.format         = VIDEO_THUMB_YUVPLANNER; //0: JPEG STREAM  1: YUV RAW STREAM
+    vd_thumb_info.capture_time   = 18*1000;
+    vd_thumb_info.require_width  = 512;
     vd_thumb_info.require_height = 512;
     vd_thumb_info.capture_result = 0;
 
-    LOGV("CDX_CMD_CAPTURE_THUMBNAIL start");
-    mRetriever->control(mRetriever, CDX_CMD_CAPTURE_THUMBNAIL, (unsigned int)(&vd_thumb_info), 0);
+	mRetriever->control(mRetriever, CDX_CMD_CAPTURE_THUMBNAIL, (unsigned int)(&vd_thumb_info), 0);
+
     LOGV("CDX_CMD_CAPTURE_THUMBNAIL end ret: %d", vd_thumb_info.capture_result);
-    if(!vd_thumb_info.capture_result) {
+    if(!vd_thumb_info.capture_result)
+    {
     	mRetriever->control(mRetriever, CDX_CMD_CLOSE_CAPTURE, 0, 0);
     	return NULL;
     }
 
     VideoFrame *frame = new VideoFrame;
-    int width = vd_thumb_info.require_width;
-    int height = vd_thumb_info.require_height;
+    int width         = vd_thumb_info.require_width;
+    int height        = vd_thumb_info.require_height;
 
-    frame->mWidth = width;
-    frame->mHeight = height;
-    frame->mDisplayWidth = width;
+    frame->mWidth         = width;
+    frame->mHeight        = height;
+    frame->mDisplayWidth  = width;
     frame->mDisplayHeight = height;
-    frame->mSize = width * height * 2;
-    frame->mData = new uint8_t[frame->mSize];
+    frame->mSize          = width * height * 2;
+    frame->mData          = new uint8_t[frame->mSize];
     frame->mRotationAngle = 0;
 
-    ColorConverter converter(
-            (OMX_COLOR_FORMATTYPE)OMX_COLOR_FormatYUV420Planar, OMX_COLOR_Format16bitRGB565);
+    ColorConverter converter((OMX_COLOR_FORMATTYPE)OMX_COLOR_FormatYUV420Planar, OMX_COLOR_Format16bitRGB565);
     CHECK(converter.isValid());
 
-    //    status_t ColorConverter::convert(
-    //            const void *srcBits,
-    //            size_t srcWidth, size_t srcHeight,
-    //            size_t srcCropLeft, size_t srcCropTop,
-    //            size_t srcCropRight, size_t srcCropBottom,
-    //            void *dstBits,
-    //            size_t dstWidth, size_t dstHeight,
-    //            size_t dstCropLeft, size_t dstCropTop,
-    //            size_t dstCropRight, size_t dstCropBottom)
-
-    converter.convert(
-    		vd_thumb_info.thumb_stream_address,
-            ((width + 15)>>4)<<4, ((height + 15)>>4)<<4,
-            0, 0, frame->mWidth - 1, frame->mHeight - 1,
-            frame->mData,
-            frame->mWidth,
-            frame->mHeight,
-            0, 0, frame->mWidth - 1, frame->mHeight - 1);
-
-    LOGV("Thumbnail Info Size: %dX%d src addr:%p dst addr:%p size:%d",frame->mWidth,frame->mHeight,
-    		vd_thumb_info.thumb_stream_address,frame->mData,frame->mSize);
+    converter.convert(vd_thumb_info.thumb_stream_address,
+                      ((width + 15)>>4)<<4,
+                      ((height + 15)>>4)<<4,
+                      0,
+                      0,
+                      frame->mWidth - 1,
+                      frame->mHeight - 1,
+                      frame->mData,
+                      frame->mWidth,
+                      frame->mHeight,
+                      0,
+                      0,
+                      frame->mWidth - 1,
+                      frame->mHeight - 1);
 
     mRetriever->control(mRetriever, CDX_CMD_CLOSE_CAPTURE, 0, 0);
 
     return frame;
 }
 
-MediaAlbumArt *CedarXMetadataRetriever::extractAlbumArt() {
+MediaAlbumArt* CedarXMetadataRetriever::extractAlbumArt()
+{
     //LOGV("extractAlbumArt (extractor: %s)", mExtractor.get() != NULL ? "YES" : "NO");
 #ifdef __ANDROID_VERSION_2_3_1
     if (0 == (mMode & METADATA_MODE_METADATA_RETRIEVAL_ONLY)) {
@@ -195,24 +247,23 @@ MediaAlbumArt *CedarXMetadataRetriever::extractAlbumArt() {
     }
 #endif
 
-    if(bCDXMetaRetriverInit == false) {
+    if(bCDXMetaRetriverInit == false)
         return NULL;
-    }
 
-    if (!mParsedMetaData) {
+    if (!mParsedMetaData)
+    {
         parseMetaData();
-
         mParsedMetaData = true;
     }
 
-    if (mAlbumArt) {
+    if (mAlbumArt)
         return new MediaAlbumArt(*mAlbumArt);
-    }
 
     return NULL;
 }
 
-const char *CedarXMetadataRetriever::extractMetadata(int keyCode) {
+const char* CedarXMetadataRetriever::extractMetadata(int keyCode)
+{
 
 #ifdef __ANDROID_VERSION_2_3_1
     if (0 == (mMode & METADATA_MODE_METADATA_RETRIEVAL_ONLY)) {
@@ -222,28 +273,30 @@ const char *CedarXMetadataRetriever::extractMetadata(int keyCode) {
     }
 #endif
 
-    if(bCDXMetaRetriverInit == false) {
+    if(bCDXMetaRetriverInit == false)
         return NULL;
-    }
 
-    if (!mParsedMetaData) {
+    if (!mParsedMetaData)
+    {
         parseMetaData(); //TODO SEGFAUT
-
         mParsedMetaData = true;
     }
 
     ssize_t index = mMetaData.indexOfKey(keyCode);
 
-    if (index < 0) {
+    if (index < 0)
         return NULL;
-    }
 
     return strdup(mMetaData.valueAt(index).string());
 }
 
-void CedarXMetadataRetriever::parseMetaData() {
-	CedarXMetaData cdx_metadata;
-	audio_file_info_t *audio_metadata = &cdx_metadata.audio_metadata;
+
+
+void CedarXMetadataRetriever::parseMetaData()
+{
+	CedarXMetaData     cdx_metadata;
+	audio_file_info_t* audio_metadata = &cdx_metadata.audio_metadata;
+
     /* modified by Gary. start {{----------------------------------- */
     String8 s8;
     int     ret;
@@ -254,16 +307,12 @@ void CedarXMetadataRetriever::parseMetaData() {
     mRetriever->control(mRetriever, CDX_CMD_GET_METADATA, (unsigned int)&cdx_metadata, 0);
     LOGV("add meta data...");
 
-    if(cdx_metadata.cdx_metadata_type == CDX_METADATA_TYPE_AUDIO) {
-	//    ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulAudio_name, audio_metadata->ulAudio_name_sz,
-	//                         audio_metadata->ulAudio_nameCharEncode, &s8 );
-	//    if( ret == 0 )
-	//    {
-	//      	mMetaData.add(METADATA_KEY_MIMETYPE, s8);
-	//    }
-
-		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulauthor, audio_metadata->ulauthor_sz,
-							 audio_metadata->ulauthorCharEncode, &s8 );
+    if(cdx_metadata.cdx_metadata_type == CDX_METADATA_TYPE_AUDIO)
+    {
+		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulauthor,
+				             audio_metadata->ulauthor_sz,
+							 audio_metadata->ulauthorCharEncode,
+							 &s8 );
 		if( ret == 0 )
 		{
 			mMetaData.add(METADATA_KEY_ARTIST, s8);
@@ -272,39 +321,43 @@ void CedarXMetadataRetriever::parseMetaData() {
 			mMetaData.add(METADATA_KEY_WRITER, s8);
 		}
 
-		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulGenre, audio_metadata->ulGenre_sz,
-							 audio_metadata->ulGenreCharEncode, &s8 );
+		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulGenre,
+				             audio_metadata->ulGenre_sz,
+							 audio_metadata->ulGenreCharEncode,
+							 &s8 );
 		if( ret == 0 )
-		{
 			mMetaData.add(METADATA_KEY_GENRE, s8);
-		}
 
-		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ultitle, audio_metadata->ultitle_sz,
-							 audio_metadata->ultitleCharEncode, &s8 );
+		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ultitle,
+				             audio_metadata->ultitle_sz,
+							 audio_metadata->ultitleCharEncode,
+							 &s8 );
+
 		if( ret == 0 )
-		{
 			mMetaData.add(METADATA_KEY_TITLE, s8);
-		}
-		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulAlbum, audio_metadata->ulAlbum_sz,
-							 audio_metadata->ulAlbumCharEncode, &s8 );
-		if( ret == 0 )
-		{
-			mMetaData.add(METADATA_KEY_ALBUM, s8);
-		}
 
-		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulYear, audio_metadata->ulYear_sz,
-							 audio_metadata->ulYearCharEncode, &s8 );
+		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulAlbum,
+				             audio_metadata->ulAlbum_sz,
+							 audio_metadata->ulAlbumCharEncode,
+							 &s8 );
+
 		if( ret == 0 )
-		{
+			mMetaData.add(METADATA_KEY_ALBUM, s8);
+
+		ret = _Convert2UTF8( (uint8_t *)audio_metadata->ulYear,
+				             audio_metadata->ulYear_sz,
+							 audio_metadata->ulYearCharEncode,
+							 &s8);
+
+		if( ret == 0 )
 			mMetaData.add(METADATA_KEY_YEAR, s8);
-		}
 
 		if( audio_metadata->ulDuration > 0 )
 		{
-			char   *str = NULL;
+			char* str = NULL;
 
 			str = new char[32];
-			if( str != NULL )
+			if(str != NULL)
 			{
 				sprintf( str, "%d", audio_metadata->ulDuration);
 				mMetaData.add(METADATA_KEY_DURATION, String8(str));
@@ -313,11 +366,14 @@ void CedarXMetadataRetriever::parseMetaData() {
 		}
 		/* modified by Gary. end   -----------------------------------}} */
     }
-    else {
+    else
+    {
     	char str[32];
 
-    	if(cdx_metadata.geo_len > 0) {
+    	if(cdx_metadata.geo_len > 0)
+    	{
 			String8 s8_geo;
+
 			s8_geo = cdx_metadata.geo_data;
 			LOGV("geo_data:%s", cdx_metadata.geo_data);
 			mMetaData.add(METADATA_KEY_LOCATION, s8_geo);
@@ -343,6 +399,18 @@ void CedarXMetadataRetriever::parseMetaData() {
 			LOGV("METADATA_KEY_VIDEO_HEIGHT:%d", cdx_metadata.duration);
 			mMetaData.add(METADATA_KEY_VIDEO_HEIGHT, String8(str));
 		}
+		if(cdx_metadata.nHasVideo> 0)
+		{
+			sprintf(str, "%d", cdx_metadata.nHasVideo);
+			LOGV("METADATA_KEY_HAS_VIDEO:%d", cdx_metadata.nHasVideo);
+			mMetaData.add(METADATA_KEY_HAS_VIDEO, String8(str));
+		}
+        if(cdx_metadata.nHasAudio> 0)                       //fuqiang
+		{
+			sprintf(str, "%d", cdx_metadata.nHasAudio);
+			LOGV("METADATA_KEY_HAS_AUDIO:%d", cdx_metadata.nHasAudio);
+			mMetaData.add(METADATA_KEY_HAS_AUDIO, String8(str));
+		} 
     }
     
 //    { kKeyMIMEType, METADATA_KEY_MIMETYPE },//ulAudio_name_sz
@@ -388,19 +456,27 @@ static int _GeneralStream2UTF8Stream( const uint8_t *src, int len, uint8_t *dst,
         
     ptr = dst;
     end = dst+size;
-    for (i = 0; i < len; ++i) {
-        if (src[i] == '\0') {
+    for (i = 0; i < len; ++i)
+    {
+        if (src[i] == '\0')
+        {
             break;
-        } else if (src[i] < 0x80) {
+        }
+        else if (src[i] < 0x80)
+        {
             if( end - ptr < 2 )
                 break;
             *ptr++ = src[i];
-        } else if (src[i] < 0xc0) {
+        }
+        else if (src[i] < 0xc0)
+        {
             if( end - ptr < 3 )
                 break;
             *ptr++ = 0xc2;
             *ptr++ = src[i];
-        } else {
+        }
+        else
+        {
             if( end - ptr < 3 )
                 break;
             *ptr++ = 0xc3;
@@ -411,6 +487,8 @@ static int _GeneralStream2UTF8Stream( const uint8_t *src, int len, uint8_t *dst,
     *ptr = '\0';
     return i;
 }
+
+
 
 
 /*
@@ -429,14 +507,15 @@ static int _IsUTF8Stream( const char* bytes, int size )
     const char* end = bytes+size;
     char  utf8;
     
-    if (bytes == NULL || size <= 0) {
+    if (bytes == NULL || size <= 0)
         return 0;
-    }
 
-    while ( bytes < end ) {
+    while ( bytes < end )
+    {
         utf8 = *(bytes++);
         // Switch on the high four bits.
-        switch (utf8 >> 4) {
+        switch (utf8 >> 4)
+        {
             case 0x00:
             case 0x01:
             case 0x02:
