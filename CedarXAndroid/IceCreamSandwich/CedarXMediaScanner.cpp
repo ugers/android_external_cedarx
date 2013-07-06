@@ -36,7 +36,7 @@ CedarXMediaScanner::~CedarXMediaScanner() {}
 
 static bool FileHasAcceptableExtension(const char *extension) {
     static const char *kValidExtensions[] = {
-    	".rmvb",".rm",".avi",".mov",".flv",".f4v",".wmv",".asf",".vob",".mpg",
+        ".rmvb",".rm",".avi",".mov",".flv",".f4v",".wmv",".asf",".vob",".mpg",
     	".pmp",".dat",".flac",".ac3",".dts",".omg",".oma",".aa3",".mp1",".mp2",
         ".mp3", ".mp4", ".m4a", ".3gp", ".3gpp", ".3g2", ".3gpp2",
         ".mpeg", ".ogg", ".wma", ".aac", ".wav",".mkv", ".mka", ".webm", ".ts", ".m2ts"
