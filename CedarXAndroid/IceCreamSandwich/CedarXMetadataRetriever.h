@@ -25,47 +25,40 @@
 #include <CDX_PlayerAPI.h>
 #include <GetAudio_format.h>
 
-namespace android {
+namespace android
+{
 
-struct DataSource;
-class MediaExtractor;
-
-struct CedarXMetadataRetriever : public MediaMetadataRetrieverInterface {
+struct CedarXMetadataRetriever : public MediaMetadataRetrieverInterface
+{
     CedarXMetadataRetriever();
     virtual ~CedarXMetadataRetriever();
 
-    virtual status_t setDataSource(
-            const char *url,
-            const KeyedVector<String8, String8> *headers);
+    virtual status_t setDataSource(const char *url, const KeyedVector<String8, String8> *headers);
 
     virtual status_t setDataSource(int fd, int64_t offset, int64_t length);
+
 #ifdef __ANDROID_VERSION_2_3_1
     virtual VideoFrame *captureFrame();
 #else
-    virtual VideoFrame *getFrameAtTime(
-            int64_t timeUs, int option);
+    virtual VideoFrame *getFrameAtTime(int64_t timeUs, int option);
 #endif
     virtual MediaAlbumArt *extractAlbumArt();
     virtual const char *extractMetadata(int keyCode);
+    virtual sp<IMemory> getStreamAtTime(int64_t timeUs);
 
 private:
-    //OMXClient mClient;
-    //sp<DataSource> mSource;
-    //sp<MediaExtractor> mExtractor;
-    CDXRetriever *mRetriever;
-    bool bCDXMetaRetriverInit;
-
-    bool mParsedMetaData;
+    CDXRetriever*             mRetriever;
+    bool                      bCDXMetaRetriverInit;
+    bool                      mParsedMetaData;
     KeyedVector<int, String8> mMetaData;
-    MediaAlbumArt *mAlbumArt;
+    MediaAlbumArt*            mAlbumArt;
 
     void parseMetaData();
 
     CedarXMetadataRetriever(const CedarXMetadataRetriever &);
-
-    CedarXMetadataRetriever &operator=(
-            const CedarXMetadataRetriever &);
+    CedarXMetadataRetriever &operator=(const CedarXMetadataRetriever &);
 };
+
 
 }  // namespace android
 
