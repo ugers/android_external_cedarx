@@ -12,6 +12,7 @@ enum FACE_NOTITY_CMD{
 	FACE_NOTITY_CMD_REQUEST_FRAME,
 	FACE_NOTITY_CMD_RESULT,
 	FACE_NOTITY_CMD_POSITION,
+	FACE_NOTITY_CMD_REQUEST_ORIENTION,
 };
 
 class CFaceDetection;
@@ -27,6 +28,8 @@ struct FocusArea_t
 {
 	int x;
 	int y;
+	int x1;
+	int y1;
 };
 
 struct FaceDetectionDev

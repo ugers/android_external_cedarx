@@ -71,7 +71,7 @@ typedef struct CedarXPlayerContext{
 	OMX_S32	disable_media_type;
 	OMX_S32	audio_mute_mode; //0: none 1: mute left 2: mute right 3: mute all
 	CedarXMetaData cdx_metadata;
-	CEDARV_REQUEST_CONTEXT cedarv_req_ctx;
+	ve_mutex_t cedarv_req_ctx;
 
 	OMX_S32 sub_enable;
 	OMX_S32 curr_subtrack_idx;
@@ -115,7 +115,7 @@ typedef struct CedarXPlayerContext{
 	cedarv_3d_mode_e				_3d_mode;
 	cedarx_display_3d_mode_e		_3d_display_mode;
 
-	OMX_S32 	cedarv_rotation;
+	OMX_S32 	cedarv_rotation;    // static rotate, 0: no rotate, 1: 90 degree (clock wise), 2: 180, 3: 270, 4: horizon flip, 5: vertical flip;
 	OMX_S32 	cedarv_max_width;
 	OMX_S32 	cedarv_max_height;
 	OMX_S32 	cedarv_output_setting;
@@ -127,17 +127,31 @@ typedef struct CedarXPlayerContext{
 	OMX_S8		player_can_seek;
 	//0:normal foramt; 1:ts, 2:m2ts
 	OMX_S8		container_type;
+	OMX_S8      av_sync;
     OMX_U8     play_bd_file;
+
+    OMX_S32    dynamic_rotation;    //the value definition is same as cedarv_rotation .
+
+    CDX_S32     vpsspeed;   //vps play, -40~100, default:0
 }CedarXPlayerContext;
 
 #include "CDX_PlayerAPI.h"
 
 typedef struct CedarXMediaRetriverContext{
 	int bIsCaptureInit;
+	int bCaptureThumbnailStream;    //0:thumbnail picture; 1:thumbnail video stream
 	CedarXMetaData cdx_metadata;
 	CedarXDataSourceDesc data_src_desc;
-	CEDARV_REQUEST_CONTEXT cedarv_req_ctx;
+	ve_mutex_t cedarv_req_ctx;
+	int        bIsVeLocked;
 	void *vd_thumb_ctx;
 }CedarXMediaRetriverContext;
 
+
+enum CDX_STREAM_SOURCE_TYPE {
+	CDX_STREAM_SOURCE_UNKOWN = -1,
+	CDX_STREAM_SOURCE_AWTS = 0,
+	CDX_STREAM_SOURCE_TS = 1,
+	CDX_STREAM_SOURCE_NORMAL_TS = 2,
+};
 #endif

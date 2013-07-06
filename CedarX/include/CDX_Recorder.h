@@ -29,10 +29,6 @@ enum cdx_video_source {
     CDX_VIDEO_SOURCE_PUSH_BUFFER,
 };
 
-#ifndef __OS_LINUX
-int CDXRecorder_Create(void **inst);
-void CDXRecorder_Destroy(void *recorder);
-
 typedef struct CDXRecorderBsInfo
 {
 	int  bs_count;
@@ -40,6 +36,26 @@ typedef struct CDXRecorderBsInfo
 	char *bs_data[4];
 	int  bs_size[4];
 }CDXRecorderBsInfo;
+
+typedef struct CdxRecorderWriterCallbackInfo {
+	void *parent;
+	int (*writer)(void *parent, CDXRecorderBsInfo *bs_info);
+}CdxRecorderWriterCallbackInfo;
+
+typedef struct CdxRecorderMOtionDetectCB{
+	void *parent;
+	int (*motionDetect)(void *parent, int status);
+}CdxRecorderMOtionDetectCB;
+
+#ifndef __OS_LINUX
+int CDXRecorder_Create(void **inst);
+void CDXRecorder_Destroy(void *recorder);
+
+typedef struct motion_param  //don't touch it it it alse define in H264encLibApi.h
+{
+	int motion_detect_enable;
+	int motion_detect_ratio;   //for 0 to 12,the 0 is the best sensitive
+}motion_param;
 
 typedef enum RawPacketType
 {
@@ -57,11 +73,6 @@ typedef struct RawPacketHeader
 	long long pts;
 }__attribute__((packed)) RawPacketHeader;
 
-typedef struct CdxRecorderWriterCallbackInfo {
-	void *parent;
-	int (*writer)(void *parent, CDXRecorderBsInfo *bs_info);
-}CdxRecorderWriterCallbackInfo;
-
 typedef struct CDXRecorder
 {
 	void *context;
@@ -74,6 +85,7 @@ int CDXRecorder_Exit();
 int CDXRecorder_Control(int cmd, unsigned int para0, unsigned int para1);
 
 #endif
+
 
 #endif	// _CDX_RECORDER_H_
 

@@ -27,7 +27,7 @@ struct ABuffer;
 struct Source : public RefBase {
     Source() {}
 
-    virtual void start() = 0;
+    virtual void start(int numBuffer, int bufferSize) = 0;
     virtual void stop() {}
 
     // Returns OK iff more data was available,

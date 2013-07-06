@@ -45,6 +45,7 @@ struct AUDIODECDATATYPE {
 	//cdx_sem_t cdx_sem_wait_outbuffer_empty;
 	OMX_S32 demux_type;
 	OMX_S32 decode_mode;
+    OMX_S32 codec_type;
 	OMX_S32 priv_flag;
 	OMX_S32 audio_info_flags;
 	OMX_S32 file_size;  //used for raw music
@@ -65,6 +66,7 @@ struct AUDIODECDATATYPE {
 	BsInFor          ad_cedar_info;
 	Ac320FileRead    DecFileInfo;
 	com_internal     pInternal;
+	CDX_S32			 force_exit;
 	void*      libHandle;
 	int  (*cedar_init						)(AUDIODECDATATYPE *pAudioDecData);
 	void (*cedar_exit						)(AUDIODECDATATYPE *pAudioDecData);

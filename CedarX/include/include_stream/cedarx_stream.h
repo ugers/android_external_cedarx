@@ -47,6 +47,10 @@ typedef struct cdx_stream_info {
   int					isReqData;
   CedarXDataSourceDesc  data_src_desc;
 
+  //TODO:merge with data_src_desc above;
+  //This variable is holy shit.
+  CedarXDataSourceDesc  *another_data_src_desc;
+
   //below reserved are only used by cedarx internal
   void *reserved_0;
   void *reserved_1;
@@ -60,6 +64,8 @@ typedef struct cdx_stream_info {
   int   file_descriptor;
 #endif
 
+  void* m3u8_context;
+
   int  (*seek)(struct cdx_stream_info *stream, cdx_off_t offset, int whence);
   cdx_off_t (*tell)(struct cdx_stream_info *stream);
   int  (*read)(void *ptr, size_t size, size_t nmemb, struct cdx_stream_info *stream);
@@ -67,7 +73,7 @@ typedef struct cdx_stream_info {
   int  (*write2)(void *bs_info, struct cdx_stream_info *stream);
   long long (*getsize)(struct cdx_stream_info *stream);
   int (*destory)(struct cdx_stream_info *stm_info);
-
+  int (*decrypt)(void *ptr, size_t size, int pkt_type, struct cdx_stream_info *stream);
   //below two function used for m3u/ts
   long long (*seek_to_time)(struct cdx_stream_info *stream, long long us);
   long long (*get_total_duration)(struct cdx_stream_info *stream);

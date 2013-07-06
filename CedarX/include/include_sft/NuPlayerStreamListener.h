@@ -26,26 +26,29 @@ namespace android {
 
 struct MemoryDealer;
 
-struct NuPlayerStreamListener : public BnStreamListener {
-    NuPlayerStreamListener(
-            const sp<IStreamSource> &source,
-            ALooper::handler_id targetID);
+struct NuPlayerStreamListener : public BnStreamListener
+{
+    NuPlayerStreamListener(const sp<IStreamSource> &source, ALooper::handler_id targetID);
+    NuPlayerStreamListener(const sp<IStreamSource> &source, ALooper::handler_id targetID, int numBuffers, int bufferSize);
 
     virtual void queueBuffer(size_t index, size_t size);
 
-    virtual void issueCommand(
-            Command cmd, bool synchronous, const sp<AMessage> &extra);
+    virtual void issueCommand(Command cmd, bool synchronous, const sp<AMessage> &extra);
 
     void start();
+    void stop();
+
     ssize_t read(void *data, size_t size, sp<AMessage> *extra);
 
 private:
-    enum {
+    enum
+    {
         kNumBuffers = 16,
-        kBufferSize = 1024 * 4
+        kBufferSize = 4 * 1024
     };
 
-    struct QueueEntry {
+    struct QueueEntry
+    {
         bool mIsCommand;
 
         size_t mIndex;
@@ -58,13 +61,15 @@ private:
 
     Mutex mLock;
 
-    sp<IStreamSource> mSource;
-    ALooper::handler_id mTargetID;
-    sp<MemoryDealer> mMemoryDealer;
+    sp<IStreamSource>    mSource;
+    ALooper::handler_id  mTargetID;
+    sp<MemoryDealer>     mMemoryDealer;
     Vector<sp<IMemory> > mBuffers;
-    List<QueueEntry> mQueue;
-    bool mEOS;
-    bool mSendDataNotification;
+    List<QueueEntry>     mQueue;
+    bool                 mEOS;
+    bool                 mSendDataNotification;
+    int                  mNumBuffers;
+    int                  mBufferSize;
 
     DISALLOW_EVIL_CONSTRUCTORS(NuPlayerStreamListener);
 };

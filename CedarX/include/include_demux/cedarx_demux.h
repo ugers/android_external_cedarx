@@ -95,6 +95,14 @@ typedef enum CDX_DEMUX_COMMANDS
     CDX_DMX_CMD_SET_PLAY_BD_FILE,
 
     CDX_DMX_CMD_SNIFF_SFT_MIME,
+    CDX_STREAM_CMD_FORCE_EXIT,
+
+    CDX_DMX_CMD_SET_DEFAULT_LOW_WATER_THRESHOLD,
+    CDX_DMX_CMD_SET_DEFAULT_HIGH_WATER_THRESHOLD,
+	
+	CDX_DMX_CMD_SET_TRACK_INFO,
+
+    CDX_DMX_CMD_SKIP_CHUNK_DATA = 0x100,
 } CDX_DEMUX_COMMANDS;
 
 typedef enum CDX_DEMUX_FLAGS{
@@ -266,7 +274,6 @@ typedef struct CedarXDemuxerAPI {
 
   //for dynamic library
   void *dl_handle;
-  int httplive_use_mplayer;
   //below reserved are used by customer
   void *reserved_usr_0;
   void *reserved_usr_1;
@@ -278,6 +285,8 @@ typedef struct CedarXDemuxerAPI {
   int  (*read)(struct CedarXDemuxerAPI *handle, CedarXPacket *cdx_pkt);
   void (*seek)(struct CedarXDemuxerAPI *handle, CDX_S64 abs_seek_secs, int flags);
   int  (*control)(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, void *arg);
+  //while demux works in a single thread, it's neccessary to have an interface to stop it.
+  void  (*stop)(struct CedarXDemuxerAPI *handle, void *arg);
 } CedarXDemuxerAPI;
 
 CedarXDemuxerAPI *cedarx_demux_create(int demux_type);

@@ -178,6 +178,7 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexConfigCommonExclusionRect, /** reference: OMX_CONFIG_RECTTYPE */
     OMX_IndexConfigCommonDithering, /**< reference: OMX_TIME_CONFIG_DITHERTYPE */
     OMX_IndexConfigCommonPlaneBlend, /** reference: OMX_CONFIG_PLANEBLENDTYPE */
+    OMX_IndexVendorSetDynamicRotate,/** dynamic rotate*/
 
 
     /* Reserved Configuration range */
@@ -274,6 +275,13 @@ typedef enum OMX_INDEXTYPE {
 
     OMX_IndexVendorAdjustClock2, //for StreamingSource (wifi display)
 
+    //clock component command
+    OMX_IndexVendor_ClockComponent_SetVps = 0xFF000200,      //set vpsspeed to clock_component. pComponentConfigStructure = (__s32)vpsspeed, -40~100
+    OMX_IndexVendor_ClockComponent_GetVps,
+
+    //audio render component command
+    OMX_IndexVendor_AudioRenderComponent_SetVps = 0xFF000300,      //set vpsspeed to audio render. pComponentConfigStructure = (__s32)vpsspeed, -40~100
+
     OMX_IndexVendorSwitchSubtilte = 0xFF001000,
     OMX_IndexVendorDisableSubtilte,
     OMX_IndexVendorSetSubtitleType,
@@ -300,10 +308,29 @@ typedef enum OMX_INDEXTYPE {
 	OMX_IndexVendorSetExtraData,
 	OMX_IndexVendorSetURL,
 	OMX_IndexVendorSetAudioRecorderMode,
+	OMX_IndexVendorSetRecMotionDetectionCB,
+	OMX_IndexVendorSetMotionParam,
 
 	OMX_IndexVendorProbe,		//* for the user demux module to probe.
 
 	OMX_IndexVendorSetRecRenderCallbackInfo,
+	OMX_IndexVendorGetDuarations,
+	OMX_IndexVendorForceStopNuCachedSource,
+
+	//add by yaosen 2013-1-29
+    OMX_IndexVendorGetCurrentCachedDataSize,
+    OMX_IndexVendorGetBitrate,
+
+    OMX_IndexVendorSetCacheParameter,
+    OMX_IndexVendorGetCacheParameter,
+
+	OMX_IndexVendorGetVBVFrameNum,
+    OMX_IndexVendorSetCedarvVBVSize,
+
+    OMX_IndexVendorSetDefaultLowWaterThreshold,
+    OMX_IndexVendorSetDefaultHighWaterThreshold,
+
+    OMX_IndexVendorSetAVSync,
 
     OMX_IndexMax = 0x7FFFFFFF
 

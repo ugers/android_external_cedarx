@@ -22,5 +22,6 @@
 #include <CDX_Types.h>
 
 CDX_S64 CDX_GetNowUs();
+void hexdump(void * buf, CDX_U32  size);
 
 #endif

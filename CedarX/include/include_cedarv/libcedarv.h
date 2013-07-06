@@ -155,10 +155,16 @@ extern "C" {
         CEDARV_PIXEL_FORMAT_YUV420     = 0xd,
         CEDARV_PIXEL_FORMAT_YUV411     = 0xe,
         CEDARV_PIXEL_FORMAT_CSIRGB     = 0xf,
-        CEDARV_PIXEL_FORMAT_AW_YUV420  = 0x10,
-        CEDARV_PIXEL_FORMAT_AW_YUV422  = 0x11,
-        CEDARV_PIXEL_FORMAT_AW_YUV411  = 0x12
+        CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV420  = 0x10,
+        CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV422  = 0x11,
+        CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV411  = 0x12,
+        CEDARV_PIXEL_FORMAT_PLANNER_YUV420        = 0x13,
+        CEDARV_PIXEL_FORMAT_PLANNER_YVU420        = 0x14
     }cedarv_pixel_format_e;
+	
+	#define CEDARV_PIXEL_FORMAT_AW_YUV420 CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV420
+	#define CEDARV_PIXEL_FORMAT_AW_YUV422 CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV422
+	#define CEDARV_PIXEL_FORMAT_AW_YUV411 CEDARV_PIXEL_FORMAT_MB_UV_COMBINE_YUV411
     
 	#define CEDARV_PICT_PROP_NO_SYNC   0x1
         
@@ -227,6 +233,7 @@ extern "C" {
         CEDARV_RESULT_KEYFRAME_DECODED        = 0x3,      //* decode operation decodes one key frame;
         CEDARV_RESULT_NO_FRAME_BUFFER         = 0x4,      //* fail when try to get an empty frame buffer;
         CEDARV_RESULT_NO_BITSTREAM            = 0x5,      //* fail when try to get bitstream frame;
+        CEDARV_RESULT_MULTI_PIXEL			  = 0x6,      //* support multi_pixel;
         
         CEDARV_RESULT_ERR_FAIL                = -1,       //* operation fail;
         CEDARV_RESULT_ERR_INVALID_PARAM       = -2,       //* failure caused by invalid function parameter;
@@ -287,6 +294,13 @@ extern "C" {
         CEDARV_COMMAND_CLOSE_MAF,
         CEDARV_COMMAND_SET_DEMUX_TYPE,
         CEDARV_COMMAND_DECODE_NO_DELAY,
+		CEDARV_COMMAND_SET_DYNAMIC_ROTATE_ANGLE,
+        CEDARV_COMMAND_DYNAMIC_ROTATE,
+        CEDARV_COMMAND_SET_VBV_SIZE,
+        CEDARV_COMMAND_SET_PIXEL_FORMAT,			//1633
+        CEDARV_COMMAND_MULTI_PIXEL,
+        CEDARV_COMMAND_OPEN_YV32_TRANSFROM,
+        CEDARV_COMMAND_CLOSE_YV32_TRANSFROM
     }cedarv_io_cmd_e;
     
     
@@ -317,6 +331,8 @@ extern "C" {
         
         s32 (*display_request)(cedarv_decoder_t* p, cedarv_picture_t* picture);
         s32 (*display_release)(cedarv_decoder_t* p, u32 frame_index);
+        s32 (*picture_ready)(cedarv_decoder_t* p);
+        s32 (*display_dump_picture)(cedarv_decoder_t* p, cedarv_picture_t* picture);
         s32 (*set_vstream_info)(cedarv_decoder_t* p, cedarv_stream_info_t* info);
         
         s32 (*query_quality)(cedarv_decoder_t* p, cedarv_quality_t* vq);
@@ -327,12 +343,13 @@ extern "C" {
         void *cedarx_cookie;
     };
 
+
+cedarv_decoder_t* libcedarv_init(s32 *ret);
+s32 libcedarv_exit(cedarv_decoder_t* p);
 #ifdef __cplusplus
 }
 #endif
 
-cedarv_decoder_t* libcedarv_init(s32 *ret);
-s32 libcedarv_exit(cedarv_decoder_t* p);
 
 
 #endif

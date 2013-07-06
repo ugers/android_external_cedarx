@@ -35,6 +35,9 @@ typedef struct CedarXMetaData {
 	unsigned int duration;
 	int  width;
 	int  height;
+	int  nHasVideo;
+	int  nHasAudio;
+	int  nHasSubtitle;
 }CedarXMetaData;
 
 #endif

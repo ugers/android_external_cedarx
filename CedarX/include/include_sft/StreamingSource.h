@@ -27,11 +27,13 @@ namespace android {
 struct ABuffer;
 struct ATSParser;
 
-struct StreamingSource : public Source {
+struct StreamingSource : public Source
+{
     StreamingSource(const sp<IStreamSource> &source);
 
-    virtual void start();
+    virtual void start(int numBuffer, int bufferSize);
 
+    virtual void stop();
     virtual status_t feedMoreTSData() {return OK;};
 
     virtual sp<MetaData> getFormat(bool audio) { return NULL;};

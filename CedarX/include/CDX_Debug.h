@@ -45,41 +45,29 @@ extern "C" {
 			((void)printf("\n"))
 	#endif
 
-	#if LOG_NDEBUG
-	#define LOGD(...)   ((void)0)
-	#else
 	#define LOGD(...) ((void)printf("D/" LOG_TAG ": "));         \
 			((void)printf("(%d) ",__LINE__));      \
 			((void)printf(__VA_ARGS__));          \
 			((void)printf("\n"))
-	#endif
 
-	#if LOG_NDEBUG
-	#define LOGI(...)   ((void)0)
-	#else
+
 	#define LOGI(...) ((void)printf("I/" LOG_TAG ": "));         \
 			((void)printf("(%d) ",__LINE__));      \
 			((void)printf(__VA_ARGS__));          \
 			((void)printf("\n"))
-	#endif
 
-	#if LOG_NDEBUG
-	#define LOGW(...)   ((void)0)
-	#else
+
 	#define LOGW(...) ((void)printf("W/" LOG_TAG ": "));         \
 			((void)printf("(%d) ",__LINE__));      \
 			((void)printf(__VA_ARGS__));          \
 			((void)printf("\n"))
-	#endif
 
-	#if LOG_NDEBUG
-	#define LOGE(...)   ((void)0)
-	#else
+
 	#define LOGE(...) ((void)printf("E/" LOG_TAG ": "));         \
 			((void)printf("(%d) ",__LINE__));      \
 			((void)printf(__VA_ARGS__));          \
 			((void)printf("\n"))
-	#endif
+
 
 	#if LOG_NDEBUG
 	#define LOGH

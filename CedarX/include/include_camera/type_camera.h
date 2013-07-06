@@ -6,8 +6,8 @@ typedef struct PREVIEWINFO_t
 {
 	int left;
 	int top;
-	int height;			// preview height
 	int width;			// preview width
+	int height;			// preview height
 }PREVIEWINFO_t, RECT_t;
 
 typedef struct V4L2BUF_t
@@ -20,6 +20,21 @@ typedef struct V4L2BUF_t
 	long long		timeStamp;		// time stamp of this frame
 	RECT_t			crop_rect;
 	int				format;
+	void*           overlay_info;
+	
+	// thumb 
+	unsigned char	isThumbAvailable;
+	unsigned char	thumbUsedForPreview;
+	unsigned char	thumbUsedForPhoto;
+	unsigned char	thumbUsedForVideo;
+	unsigned int	thumbAddrPhyY;		// physical Y address of thumb buffer
+	unsigned int	thumbAddrVirY;		// virtual Y address of thumb buffer
+	unsigned int	thumbWidth;
+	unsigned int	thumbHeight;
+	RECT_t			thumb_crop_rect;
+	int 			thumbFormat;
+	
+	int 			refCnt; 		// used for releasing this frame
 }V4L2BUF_t;
 
 typedef enum MEDIA_SRC_MODE
@@ -48,12 +63,18 @@ typedef struct VIDEOINFO_t
 	int rotate_degree;		// only support 0, 90, 180 and 270
 }VIDEOINFO_t;
 
+typedef enum AUDIO_ENCODER_TYPE
+{
+	AUDIO_ENCODER_AAC_TYPE,
+	AUDIO_ENCODER_LPCM_TYPE
+}AUDIO_ENCODER_TYPE;
 typedef struct AUDIOINFO_t
 {
 	int sampleRate;
 	int channels;
 	int bitRate;
 	int bitsPerSample;
+	int audioEncType;  // 0: aac, 1: LPCM
 }AUDIOINFO_t;
 
 typedef struct ENCEXTRADATAINFO_t //don't touch it, because it also defined in type.h
@@ -71,6 +92,8 @@ typedef struct ENC_BUFFER_t
 	int height;
 	RECT_t crop_rect;
 	int force_keyframe;
+	void*  overlay_info;
+	int format;
 }ENC_BUFFER_t;
 
 typedef enum JPEG_COLOR_FORMAT
@@ -79,6 +102,13 @@ typedef enum JPEG_COLOR_FORMAT
     JPEG_COLOR_YUV422,
     JPEG_COLOR_YUV420,
     JPEG_COLOR_YUV411,
+    JPEG_COLOR_YUV420_NV12,
+    JPEG_COLOR_YUV420_NV21,
+    JPEG_COLOR_TILE_32X32,
+    JPEG_COLOR_CSIARGB,
+    JPEG_COLOR_CSIRGBA,
+    JPEG_COLOR_CSIABGR,
+    JPEG_COLOR_CSIBGRA
 }JPEG_COLOR_FORMAT;
 
 typedef struct JPEG_ENC_t
@@ -113,8 +143,8 @@ typedef struct JPEG_ENC_t
 	long        	gps_timestamp;
 	char			gps_processing_method[100];
 	int 			whitebalance;
-	char  			CameraMake[11];//for the cameraMake name
-	char  			CameraModel[21];//for the cameraMode
+	char  			CameraMake[64];//for the cameraMake name
+	char  			CameraModel[64];//for the cameraMode
 	char  			DateTime[21];//for the data and time
 }JPEG_ENC_t;
 

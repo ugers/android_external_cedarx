@@ -159,6 +159,17 @@ typedef struct __AUDIO_FILE_INFO
 
 int GetAudioFormat(const char *pFilename,int *A_Audio_Format);//return 1 :succed 0 :fail
 int GetAudioInfo(const char *pFilename, audio_file_info_t *AIF);  //return 1 :succed 0 :fail
+/*
+function :GetAudioFormatData
+说明：根据文件前几个字节快速判断文件类型。
+参数说明：ptr ：文件数据首地址。
+			buflen：数据长度。
+			A_Audio_Format：返回文件文件格式
+返回值：1 :succed 0 :fail
+*/
+//simple format from first 16bytes
+int GetAudioFormatData(unsigned char *ptr,int buflen,int *A_Audio_Format);//return 1 :succed 0 :fail
+
 int GetAudioDataInfo(const char *pFilename, audio_file_info_t *AIF,signed char* buf,int datalen);  //return 1 :succed 0 :fail
 int GetAudioFileInfo(FILE *Bitstream, audio_file_info_t *AIF);  //return 1 :succed 0 :fail
 

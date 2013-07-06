@@ -19,6 +19,7 @@
 #ifndef CDX_Common_H_
 #define CDX_Common_H_
 
+#include <pthread.h>
 #include <CDX_Types.h>
 #include <CDX_PlayerAPI.h>
 #include <CDX_Subtitle.h>
@@ -32,6 +33,7 @@ typedef enum CEDARX_SOURCETYPE{
 	CEDARX_SOURCE_SFT_STREAM, //for ics
 	CEDARX_SOURCE_NORMAL_STREAM,
 	CEDARX_SOURCE_WRITER_CALLBACK, //for recoder writer
+	CEDARX_SOURCE_NETWORK_RTSP,
 }CEDARX_SOURCETYPE;
 
 typedef enum MEDIA_3DMODE_TYPE{
@@ -47,27 +49,32 @@ typedef struct CedarXDataSourceDesc{
 	CEDARX_MEDIA_TYPE media_type;
 	MEDIA_3DMODE_TYPE media_subtype_3d;
 
-	void *stream_info; //used for m3u/ts
-
+//	void *stream_info; //used for m3u/ts
+	void *m3u_handle;
 	char *buffer_data;
 	int  buffer_data_length;
 	reqdata_from_dram req_cb;
 
 	char *source_url; //SetDataSource url
 	CedarXExternFdDesc ext_fd_desc;
-
+	int thirdpart_encrypted_type;
 	void *url_headers;
 	void *sft_stream_handle;
+	pthread_mutex_t sft_handle_mutex;
 	void *sft_cached_source2;
 	void *sft_http_source;
-	CDX_S64 sft_stream_length;
+	void *sft_rtsp_source;
+	long long sft_stream_length;
+	int	 sft_stream_handle_num;
 
 	int  demux_type;
-	int  httplive_use_mplayer;
 
 	int  mp_stream_cache_size; //unit KByte used for mplayer cache size setting
 	char* bd_source_url;
     int   playBDFile;
+    int   disable_seek;
+
+	pthread_mutex_t m3u_handle_mutex;
 }CedarXDataSourceDesc;
 
 typedef enum CDX_AUDIO_CODEC_TYPE {
