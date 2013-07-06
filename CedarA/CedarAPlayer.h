@@ -124,7 +124,7 @@ private:
         WAIT_VO_EXIT        = 4096,
         CEDARX_LIB_INIT     = 8192,
         SUSPENDING          = 16384,
-        PAUSING				= 32768,
+        PAUSING    			= 32768,
     };
 
     mutable Mutex mLock;
