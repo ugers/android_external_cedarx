@@ -35,6 +35,9 @@
 
 #include "CedarXSoftwareRenderer.h"
 
+extern "C" {
+extern unsigned int cedarv_address_phy2vir(void *addr);
+}
 namespace android {
 
 CedarXSoftwareRenderer::CedarXSoftwareRenderer(
@@ -83,7 +86,7 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
 //            mNativeWindow.get(),
 //            NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW));
 
-    // Width must be multiple of 32???
+    // Width must be multiple of 32??? 
     CHECK_EQ(0, native_window_set_buffers_geometry(
                 mNativeWindow.get(),
                 //(bufWidth + 15) & ~15,
@@ -93,7 +96,6 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
                 //bufWidth,
                 //bufHeight,
                 halFormat));
-
     uint32_t transform;
     switch (rotationDegrees) {
         case 0: transform = 0; break;
