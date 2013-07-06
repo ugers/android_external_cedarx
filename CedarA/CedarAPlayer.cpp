@@ -333,7 +333,7 @@ status_t CedarAPlayer::seekTo(int64_t timeUs) {
 	mSeekNotificationSent = false;
 	LOGV("seek cmd0 to %lldms", timeUs);
 
-	if (!(mFlags & PLAYING) || mSeeking || (mFlags & AT_EOS)) {
+	if (mSeeking || (mFlags & AT_EOS)) {
 		LOGV( "seeking while paused or is seeking, sending SEEK_COMPLETE notification"
 					" immediately.");
 
@@ -564,6 +564,36 @@ int CedarAPlayer::CedarAPlayerCallback(int event, void *info)
 	case CDA_EVENT_AUDIORENDERGETDELAY:
 		ret = StagefrightAudioRenderGetDelay();
 		break;
+    case CDA_EVENT_AUDIORAWSPDIFPLAY:
+    {
+        int64_t token = IPCThreadState::self()->clearCallingIdentity();
+	
+    	static int raw_data_test = 0;
+    	String8 raw1 = String8("raw_data_output=1");
+    	String8 raw0 = String8("raw_data_output=0");
+    	const sp<IAudioFlinger>& af = AudioSystem::get_audio_flinger();
+        if (af == 0) 
+        {
+        	LOGE("[star]............ PERMISSION_DENIED");
+        }
+        else
+        {
+    	
+        	if (para[0])
+        	{
+        		LOGV("[star]............ to set raw data output");
+            	af->setParameters(0, raw1);
+        	}
+        	else
+        	{
+        		LOGV("[star]............ to set not raw data output");
+            	af->setParameters(0, raw0);
+        	}
+        }
+    	
+        IPCThreadState::self()->restoreCallingIdentity(token);
+    }
+        break;
 
 //	case CDA_EVENT_PREPARED:
 //		finishAsyncPrepare_l((int)para);
