@@ -22,6 +22,8 @@
 #if (CEDARX_ANDROID_VERSION < 7)
 #include <ui/android_native_buffer.h>
 #endif
+#include <hardware/hwcomposer.h>
+#include "virtual_hwcomposer.h"
 
 namespace android {
 
@@ -56,3 +58,4 @@ private:
 }  // namespace android
 
 #endif  // SOFTWARE_RENDERER_H_
+
