@@ -61,6 +61,10 @@ typedef struct __AudioDEC_DEV
     BsInFor			AudioBsInfo;
 	Ac320FileRead	DecFileInfo;
 	com_internal    pInternal;
+	char    ad_cedar_exit_imm;//exit
+	char    bitstream_underflow;//not bits
+	char    showbits_return;//end
+	pthread_mutex_t mutex_audiodec_thread;
 } __Audiodec_dev_t;
 
 #ifdef __cplusplus
