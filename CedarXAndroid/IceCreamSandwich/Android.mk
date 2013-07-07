@@ -1,7 +1,8 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-include $(TOP)/external/cedarx/Config.mk
+#include frameworks/${AV_BASE_PATH}/media/libstagefright/codecs/common/Config.mk
+include $(LOCAL_PATH)/../../Config.mk
 
 LOCAL_SRC_FILES:=                    \
         CedarXAudioPlayer.cpp        \
@@ -98,7 +99,32 @@ LOCAL_LDFLAGS += \
         $(CEDARX_TOP)/../CedarAndroidLib/LIB_$(CEDARX_ANDROID_CODE)_$(CEDARX_CHIP_VERSION)/libra.a \
         $(OUT)/obj/STATIC_LIBRARIES/libstagefright_rtsp_intermediates/libstagefright_rtsp.a \
 
-LOCAL_CFLAGS := $(CEDARX_EXT_CFLAGS) -Wno-multichar -D__ANDROID_VERSION_2_3_4
+ifeq ($(CEDARX_ENABLE_MEMWATCH),Y)
+LOCAL_STATIC_LIBRARIES += libmemwatch
+endif
+
+ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
+        LOCAL_LDLIBS += -lpthread -ldl
+        LOCAL_SHARED_LIBRARIES += libdvm
+        LOCAL_CPPFLAGS += -DANDROID_SIMULATOR
+endif
+
+ifneq ($(TARGET_SIMULATOR),true)
+LOCAL_SHARED_LIBRARIES += libdl
+endif
+
+ifeq ($(TARGET_OS)-$(TARGET_SIMULATOR),linux-true)
+        LOCAL_LDLIBS += -lpthread
+endif
+
+LOCAL_CFLAGS += -Wno-multichar 
+
+ifeq ($(CEDARX_ANDROID_VERSION),3)
+LOCAL_CFLAGS += -D__ANDROID_VERSION_2_3
+else
+LOCAL_CFLAGS += -D__ANDROID_VERSION_2_3_4
+endif
+LOCAL_CFLAGS += $(CEDARX_EXT_CFLAGS)
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE:= libCedarX
