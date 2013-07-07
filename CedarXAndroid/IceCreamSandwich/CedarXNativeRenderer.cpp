@@ -172,7 +172,7 @@ void CedarXNativeRenderer::render(const void *data, size_t size, void *platformP
 
 static int convertVirtualVideo3DInfo2video3Dinfo_t(video3Dinfo_t *pDes, VirtualVideo3DInfo *pSrc)
 {
-#if (CEDARX_ANDROID_VERSION == 6) || ((CEDARX_ANDROID_VERSION == 8) && (defined (__CHIP_VERSION_F23))) || ((CEDARX_ANDROID_VERSION == 9) && (defined (__CHIP_VERSION_F23)))
+#if (CEDARX_ANDROID_VERSION == 6) || ((CEDARX_ANDROID_VERSION == 8) && (defined (__CHIP_VERSION_F23)))
     memset(pDes, 0, sizeof(video3Dinfo_t));
     pDes->width = pSrc->width;
 	pDes->height = pSrc->height;
