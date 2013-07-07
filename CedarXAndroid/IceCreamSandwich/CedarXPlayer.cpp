@@ -2395,7 +2395,7 @@ void CedarXPlayer::StagefrightVideoRenderExit()
 	}
 }
 
-void CedarXPlayer::StagefrightVideoRenderData0(void *frame_info, int frame_id)
+void CedarXPlayer::StagefrightVideoRenderData(void *frame_info, int frame_id)
 {
 	Mutex::Autolock autoLock(mLockNativeWindow);
 
