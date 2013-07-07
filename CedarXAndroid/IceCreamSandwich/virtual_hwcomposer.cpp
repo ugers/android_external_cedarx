@@ -94,8 +94,6 @@ int convertlibhwclayerpara_SoftwareRendererVirtual2Arch(libhwclayerpara_t *pDes,
 	pDes->addr_3d_right[2]	 	= 0;
     return OK;
 }
-#else
-    #error "Unknown chip type!"
 #endif
 
 }; // namespace android
