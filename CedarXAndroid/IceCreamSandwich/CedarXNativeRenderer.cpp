@@ -72,21 +72,60 @@ CedarXNativeRenderer::CedarXNativeRenderer(const sp<ANativeWindow> &nativeWindow
     }
 
     CHECK(mNativeWindow != NULL);
-
+    
+    if(halFormat == HAL_PIXEL_FORMAT_YV12)
+    {
         native_window_set_usage(mNativeWindow.get(),
         		                GRALLOC_USAGE_SW_READ_NEVER  |
         		                GRALLOC_USAGE_SW_WRITE_OFTEN |
         		                GRALLOC_USAGE_HW_TEXTURE     |
         		                GRALLOC_USAGE_EXTERNAL_DISP);
-#if defined(__CHIP_VERSION_F23)
+
+//        native_window_set_scaling_mode(mNativeWindow.get(), NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
+
+        // Width must be multiple of 32???
+        native_window_set_buffers_geometry(mNativeWindow.get(),
+        								   bufWidth,
+        								   bufHeight,
+                                           HWC_FORMAT_YUV420PLANAR);
+
+        uint32_t transform;
+        switch (rotationDegrees)
+        {
+            case 0: transform = 0; break;
+            case 90: transform = HAL_TRANSFORM_ROT_90; break;
+            case 180: transform = HAL_TRANSFORM_ROT_180; break;
+            case 270: transform = HAL_TRANSFORM_ROT_270; break;
+            default: transform = 0; break;
+        }
+
+        if (transform)
+            native_window_set_buffers_transform(mNativeWindow.get(), transform);
+    }
+    else
+    {
+        native_window_set_usage(mNativeWindow.get(),
+        		                GRALLOC_USAGE_SW_READ_NEVER  |
+        		                GRALLOC_USAGE_SW_WRITE_OFTEN |
+        		                GRALLOC_USAGE_HW_TEXTURE     |
+        		                GRALLOC_USAGE_EXTERNAL_DISP);
+#if (defined(__CHIP_VERSION_F23) || defined(__CHIP_VERSION_F51)) //a10 do this, a10'sdk is old.
+        native_window_set_scaling_mode(mNativeWindow.get(), NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
+
+        // Width must be multiple of 32???
+        native_window_set_buffers_geometryex(mNativeWindow.get(),
+        		                             bufWidth,
+                                             bufHeight,
+                                             halFormat,
+                                             screenID);
+#elif defined(__CHIP_VERSION_F33)
         //        native_window_set_scaling_mode(mNativeWindow.get(), NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
 
         // Width must be multiple of 32???
         native_window_set_buffers_geometry(mNativeWindow.get(),
             		                       bufWidth,
                                            bufHeight,
-                                           halFormat,
-                                           screenID);
+                                           halFormat);
 #else
         #error "Unknown chip type!"
 #endif
@@ -133,12 +172,23 @@ void CedarXNativeRenderer::render(const void *data, size_t size, void *platformP
 
 static int convertVirtualVideo3DInfo2video3Dinfo_t(video3Dinfo_t *pDes, VirtualVideo3DInfo *pSrc)
 {
+#if (CEDARX_ANDROID_VERSION == 6) || ((CEDARX_ANDROID_VERSION == 8) && (defined (__CHIP_VERSION_F23))) || ((CEDARX_ANDROID_VERSION == 9) && (defined (__CHIP_VERSION_F23)))
+    memset(pDes, 0, sizeof(video3Dinfo_t));
+    pDes->width = pSrc->width;
+	pDes->height = pSrc->height;
+	pDes->format = pSrc->format;
+    pDes->src_mode = pSrc->src_mode;
+	pDes->display_mode = pSrc->display_mode;
+#elif (CEDARX_ANDROID_VERSION >= 7)
     memset(pDes, 0, sizeof(video3Dinfo_t));
     pDes->width = pSrc->width;
 	pDes->height = pSrc->height;
 	pDes->format = (e_hwc_format_t)pSrc->format;
     pDes->src_mode = (e_hwc_3d_src_mode_t)pSrc->src_mode;
 	pDes->display_mode = (e_hwc_3d_out_mode_t)pSrc->display_mode;
+#else
+    #error "Unknown chip type!"
+#endif
     return OK;
 }
 int CedarXNativeRenderer::control(int cmd, int para)
