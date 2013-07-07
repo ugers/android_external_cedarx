@@ -167,7 +167,7 @@ void CedarXNativeRenderer::render(const void *data, size_t size, void *platformP
     //Virtuallibhwclayerpara *pVirtuallibhwclayerpara = (Virtuallibhwclayerpara*)data;
     //libhwclayerpara_t   overlay_para;
     //convertlibhwclayerpara_NativeRendererVirtual2Arch(&overlay_para, pVirtuallibhwclayerpara);
-    mNativeWindow->perform(mNativeWindow.get(), NATIVE_WINDOW_SETPARAMETER, HWC_LAYER_SETFRAMEPARA, (uint32_t)(&overlay_para));
+    mNativeWindow->perform(mNativeWindow.get(), NATIVE_WINDOW_SETPARAMETER, HWC_LAYER_SETFRAMEPARA, (uint32_t)data);
 }
 
 static int convertVirtualVideo3DInfo2video3Dinfo_t(video3Dinfo_t *pDes, VirtualVideo3DInfo *pSrc)
