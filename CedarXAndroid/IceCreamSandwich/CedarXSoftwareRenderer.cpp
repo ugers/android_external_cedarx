@@ -125,7 +125,7 @@ static int ALIGN(int x, int y) {
     return (x + y - 1) & ~(y - 1);
 }
 
-void CedarXSoftwareRenderer::render0(const void *data, size_t size, void *platformPrivate)
+void CedarXSoftwareRenderer::render(const void *data, size_t size, void *platformPrivate)
 {
     ANativeWindowBuffer *buf;
 	libhwclayerpara_t*  pOverlayParam;
