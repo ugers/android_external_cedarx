@@ -190,6 +190,61 @@ void CedarXSoftwareRenderer::render0(const void *data, size_t size, void *platfo
 //    dst += dst_c_size;
 //    data += src_c_size;
 //    memcpy(dst, data, src_display_c_size);
+#elif defined(__CHIP_VERSION_F33)
+        pOverlayParam = (libhwclayerpara_t*)data;
+
+//    LOGD("buf->stride:%d buf->height:%d WXH:%dx%d cstride:%d", buf->stride, buf->height, mWidth, mHeight, dst_c_stride);
+//    {
+//    	struct timeval t;
+//    	int64_t startTime;
+//    	int64_t endTime;
+//
+//    	gettimeofday(&t, NULL);
+//    	startTime = (int64_t)t.tv_sec*1000000 + t.tv_usec;
+    {
+    	int i;
+    	int widthAlign;
+    	int heightAlign;
+    	int cHeight;
+    	int cWidth;
+    	int dstCStride;
+
+    	unsigned char* dstPtr;
+    	unsigned char* srcPtr;
+    	dstPtr = (unsigned char*)dst;
+    	srcPtr = (unsigned char*)cedarv_address_phy2vir((void*)pOverlayParam->addr[0]);
+    	widthAlign = (mWidth + 15) & ~15;
+    	heightAlign = (mHeight + 15) & ~15;
+    	for(i=0; i<heightAlign; i++)
+    	{
+    		memcpy(dstPtr, srcPtr, widthAlign);
+    		dstPtr += buf->stride;
+    		srcPtr += widthAlign;
+    	}
+
+    	cWidth = (mWidth/2 + 15) & ~15;
+    	cHeight = heightAlign;
+    	for(i=0; i<cHeight; i++)
+    	{
+    		memcpy(dstPtr, srcPtr, cWidth);
+    		dstPtr += cWidth;
+    		srcPtr += cWidth;
+    	}
+    }
+//        {
+//        	int height_align;
+//        	int width_align;
+//        	height_align = (buf->height+15) & ~15;
+//        	memcpy(dst, (void*)pOverlayParam->addr[0], dst_y_size);
+//        	memcpy((unsigned char*)dst + dst_y_size, (void*)(pOverlayParam->addr[0] + height_align*dst_c_stride), dst_c_size*2);
+//        }
+//    	gettimeofday(&t, NULL);
+//        endTime = (int64_t)t.tv_sec*1000000 + t.tv_usec;
+//        LOGD("xxxxxx memory copy cost %lld us for %d bytes.", endTime - startTime, dst_y_size + dst_c_size*2);
+//    }
+#else
+    #error "Unknown chip type!"
+#endif
 
 #if 0
 		{
@@ -217,7 +272,6 @@ void CedarXSoftwareRenderer::render0(const void *data, size_t size, void *platfo
         LOGW("Surface::queueBuffer returned error %d", err);
     }
     buf = NULL;
-
 
 }
 
