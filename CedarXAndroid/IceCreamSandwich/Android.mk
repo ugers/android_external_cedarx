@@ -5,19 +5,19 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../../Config.mk
 
 LOCAL_SRC_FILES:=                         \
-		CedarXAudioPlayer.cpp			  \
+	CedarXAudioPlayer.cpp			  \
         CedarXMetadataRetriever.cpp		  \
         CedarXMetaData.cpp				  \
         CedarXSoftwareRenderer.cpp		  \
         CedarXRecorder.cpp				  \
-		CedarXPlayer.cpp				  \
-		CedarXNativeRenderer.cpp		\
-		virtual_hwcomposer.cpp
+	CedarXPlayer.cpp				  \
+	CedarXNativeRenderer.cpp		\
+	virtual_hwcomposer.cpp
 
 
 LOCAL_C_INCLUDES:= \
-	$(JNI_H_INCLUDE) \
-	$(TOP)/frameworks/${AV_BASE_PATH}/include/media/stagefright \
+    $(JNI_H_INCLUDE) \
+    $(TOP)/frameworks/${AV_BASE_PATH}/include/media/stagefright \
     $(CEDARX_TOP)/include \
     $(CEDARX_TOP)/libutil \
     $(CEDARX_TOP)/include/include_cedarv \
@@ -36,7 +36,7 @@ ifeq ($(PLATFORM_VERSION),4.2.1)
     LOCAL_C_INCLUDES += $(TOP)/frameworks/native/include/media/hardware
 endif
 ifeq ($(PLATFORM_VERSION),4.2.2)
-	LOCAL_C_INCLUDES += $(TOP)/frameworks/native/include/media/hardware
+    LOCAL_C_INCLUDES += $(TOP)/frameworks/native/include/media/hardware
 endif
 
 
